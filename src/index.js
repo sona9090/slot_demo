@@ -9,23 +9,17 @@ const fixAtDestination = (lastAnimFrame) => {
 };
 
 const animateSlots = ([step1, step2], duration, timeout, condition = null) => {
-  if (condition !== null) {
-    if (!condition) {
-      return;
-    }
-  }
+  if (condition !== null && !condition) return;
 
   setTimeout(() => {
     slot.animate([step1, step2], {
-      duration: duration,
+      duration,
       iterations: 1
     });
 
     fixAtDestination(step2);
   }, timeout);
 };
-
-let slot = document.getElementById("slot");
 
 let urls = [
   "https://thecatsite.com/c/how-do-cats-choose-who-to-sleep-with/",
@@ -42,10 +36,14 @@ let urls = [
 
 const max = urls.length - 1;
 
+let slot = document.getElementById("slot");
+
 // creating the slots content
-let slotCover = `<div class="slot_cover">
-  <div id="spin-btn">SPIN</div>
-</div>`;
+let slotCover = `
+  <div class="slot_cover">
+    <div id="spin-btn">SPIN</div>
+  </div>
+`;
 
 let content =
   slotCover +
@@ -68,8 +66,8 @@ const spinBtn = document.getElementById("spin-btn");
 
 // the first animation configuration -
 // moving from the first slot to the last one
-let destinationFrame1 = { transform: `translateY(${0 - max * 100}%)` };
-let animationFrames = [{ transform: `translateY(0)` }, destinationFrame1];
+let destinationLast = { transform: `translateY(${0 - max * 100}%)` };
+let animationFrames = [{ transform: `translateY(0)` }, destinationLast];
 let animationTiming = { duration: 1000, iterations: 1 };
 
 spinBtn.addEventListener("click", () => {
@@ -79,7 +77,7 @@ spinBtn.addEventListener("click", () => {
 
   // step 1 - going to the last slot
   slot.animate(animationFrames, animationTiming);
-  fixAtDestination(destinationFrame1);
+  fixAtDestination(destinationLast);
 
   // giving an index of the random chosen slot
   let finalSlotNum = Math.floor(Math.random() * max);
@@ -91,44 +89,46 @@ spinBtn.addEventListener("click", () => {
 
   let destinSlotPos = finalSlotNum * 100;
 
+  // animations steps
   let animStepDown = {
     transform: `translateY(${-50 - destinSlotPos}%)`
   };
   let animStepUp = { transform: `translateY(${50 - destinSlotPos}%)` };
   let lastAnimFrame = { transform: `translateY(${0 - destinSlotPos}%)` };
 
-  let thirdDuration = notFirstSlot ? 300 : 0;
-  let thirdTimeout = 1000 + (notLastSlot ? standardTime : 0);
-  let fourthTimeout = thirdTimeout + thirdDuration;
+  // animations timings
+  let upDuration = notFirstSlot ? 300 : 0;
+  let upTimeout = 1000 + (notLastSlot ? standardTime : 0);
+  let finalTimeout = upTimeout + upDuration;
 
   // animation steps data to use in animateSlots func.
-  // args: [animation steps: {transform: 'translateY(value)'}],
+  // args: [2 animation steps (from, to): {transform: 'translateY(value)'}],
   // duration: number, timeout: number, condition(if exists): boolean
-  let dataStep2 = [
-    [destinationFrame1, animStepDown],
+  let dataStepDown = [
+    [destinationLast, animStepDown],
     standardTime,
     1000,
     notLastSlot
   ];
-  let dataStep3 = [
+  let dataStepUp = [
     [animStepDown, animStepUp],
-    thirdDuration,
-    thirdTimeout,
+    upDuration,
+    upTimeout,
     notFirstSlot
   ];
-  let dataStep4 = [[animStepUp, lastAnimFrame], 700, fourthTimeout];
+  let dataStepFinal = [[animStepUp, lastAnimFrame], 700, finalTimeout];
 
   // step 2 - going Down, if these are not the last two slots
-  animateSlots(...dataStep2);
+  animateSlots(...dataStepDown);
 
   // step 3 - going Up, if these are not the first two slots
-  animateSlots(...dataStep3);
+  animateSlots(...dataStepUp);
 
   // step 4 - going to the destionation slot
-  animateSlots(...dataStep4);
+  animateSlots(...dataStepFinal);
 
   // going to the chosen slot link in 5 seconds
   setTimeout(() => {
     document.querySelectorAll(".slot")[finalSlotNum].querySelector("a").click();
-  }, 5700 + fourthTimeout);
+  }, 5700 + finalTimeout);
 });
